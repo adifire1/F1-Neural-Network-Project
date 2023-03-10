@@ -1,0 +1,24 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r setup, include = FALSE}
+library(data.table) 
+library(rjson)
+library(ggplot2)
+library(ggthemes)
+library(readr)
+library(stringr)
+library(tidyr)
+library(mosaic)
+```
+
+```{r}
+loss <- read_csv("loss.csv")
+```
+
+```{r}
+loss_graph <- ggplot(loss,aes(x=Epoch,y=Loss))+geom_line()+theme_excel()+geom_smooth()+ggtitle("Mean Squared Error Loss")
+loss_graph
+```
+
