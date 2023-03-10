@@ -1,0 +1,176 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r setup, include = FALSE}
+library(ggplot2)
+library(ggthemes)
+library(readr)
+library(stringr)
+library(tidyr)
+library(mosaic)
+```
+
+```{r}
+filelist = list.files(pattern = "Brazil.*.csv")
+
+#assuming tab separated values with a header    
+datalist = lapply(filelist, function(x)read_csv(x))
+
+#assuming the same header/columns for all files
+datafr = do.call("rbind", datalist)
+```
+
+```{r}
+names(datafr) <- c("Team", "Driver", "LapNumber","Compound", "Stint", "LapTime", "TyreLife", "FreshTyre", "TrackStatus", "IsAccurate")
+datafr['LapTime'] = as.numeric(datafr$LapTime)/1000000000
+datafr <- filter(datafr, TrackStatus==1)
+datafr <-  filter(datafr, IsAccurate==TRUE)
+```
+```{r}
+hist <- ggplot(datafr,aes(x=LapTime))+geom_histogram()
+hist
+```
+
+```{r}
+linearModel <- lm(LapTime ~ LapNumber, data=datafr)
+summary(linearModel)
+```
+```{r}
+predicted_df <- data.frame(laptime_pred = predict(linearModel, datafr), LapNumber=datafr$LapNumber)
+plt <- ggplot(datafr, aes(LapNumber, LapTime,color = Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()+geom_line(color='blue',data = predicted_df, aes(x=LapNumber, y=laptime_pred))+xlab("Laps")+ylab("Lap Time (seconds)")+ggtitle("Lap Time Prediction - All Teams")
+plt
+```
+
+```{r}
+laptimeModel <- lm(LapTime ~ Driver+Compound+LapNumber+Stint, data=datafr)
+summary(laptimeModel)
+```
+
+```{r}
+predicted_df <- data.frame(laptime_pred = predict(laptimeModel, merc), LapNumber=datafr$LapNumber)
+plt <- ggplot(datafr, aes(LapNumber, LapTime,color = Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()+geom_line(color='blue',data = predicted_df, aes(x=LapNumber, y=laptime_pred))
+plt
+```
+
+
+```{r}
+TeamList = c("McLaren","Mercedes","Sauber","Toro Rosso","Haas F1 Team", "Renault", "Racing Point","Ferrari","Red Bull Racing","Williams")
+
+mclaren <- filter(datafr, Team=="McLaren")
+merc <- filter(datafr, Team=="Mercedes")
+sauber <- filter(datafr, Team=="Sauber")
+tororosso <- filter(datafr, Team=="Toro Rosso")
+haas <- filter(datafr, Team=="Haas F1 Team")
+renault <- filter(datafr, Team=="Renault")
+racingpoint <- filter(datafr, Team=="Racing Point")
+ferrari <- filter(datafr, Team=="Ferrari")
+rbr <- filter(datafr, Team=="Red Bull Racing")
+williams <- filter(datafr, Team=="Williams")
+
+bottas <-  filter(datafr, Driver=="BOT")
+```
+
+```{r}
+predicted_df <- data.frame(laptime_pred = predict(laptimeModel, bottas), LapNumber=bottas$LapNumber)
+plt <- ggplot(bottas, aes(LapNumber, LapTime,color = Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()+geom_line(color='blue',data = predicted_df, aes(x=LapNumber, y=laptime_pred))+ggtitle("Bottas Predicted Lap Time") + xlab("Laps") + ylab("Lap Time (seconds)")
+plt
+```
+
+```{r}
+boxplt <- ggplot(merc, aes(x=Compound,y=LapTime))+geom_boxplot()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()+ xlab("Tire Compound") + ylab("Lap Time (seconds)") + ggtitle("Brazil 2018 - Lap Times")
+boxplt
+```
+
+```{r}
+plt <- ggplot(datafr, aes(TyreLife, LapTime,color = Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt
+```
+```{r}
+plt <- ggplot(mclaren, aes(TyreLife, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(merc, aes(TyreLife, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()+ xlab("Laps raced on tire") + ylab("Lap Time (seconds)") + ggtitle(paste(merc$Team," - Brazil 2018"))
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(sauber, aes(TyreLife, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(tororosso, aes(TyreLife, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(haas, aes(TyreLife, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(renault, aes(TyreLife, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(racingpoint, aes(TyreLife, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(ferrari, aes(TyreLife, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(rbr, aes(TyreLife, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(williams, aes(TyreLife, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+
+
+```{r}
+plt <- ggplot(datafr, aes(LapNumber, LapTime))+geom_point()
+plt + facet_wrap(~Driver,ncol=5)
+```
+```{r}
+plt <- ggplot(mclaren, aes(LapNumber, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(merc, aes(LapNumber,LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel() + xlab("Lap Number") + ylab("Lap Time (seconds)") + ggtitle(paste(merc$Team," - Brazil 2018"))
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(sauber, aes(LapNumber, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(tororosso, aes(LapNumber, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(haas, aes(LapNumber, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(renault, aes(LapNumber, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(racingpoint, aes(LapNumber, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(ferrari, aes(LapNumber, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(rbr, aes(LapNumber, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+```{r}
+plt <- ggplot(williams, aes(LapNumber, LapTime,color=Compound))+geom_point()+scale_color_manual(values=c("#FFFFFF", "#FFD318", "#FF2D2C")) + theme_excel()
+plt + facet_wrap(~Driver,ncol=2)
+```
+
+
